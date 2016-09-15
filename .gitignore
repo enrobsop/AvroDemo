@@ -1,4 +1,9 @@
 *~
+
+# IntelliJ IDEA
 *.iml
 .idea/
+
+# Generated and build output.
 /target
+/src/main/java/example/avro
