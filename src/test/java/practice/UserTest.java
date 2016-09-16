@@ -1,8 +1,12 @@
 package practice;
 
 import example.avro.User;
+import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -12,6 +16,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,4 +91,40 @@ public class UserTest {
 
     }
 
+    @Test
+    public void itSerializesWithoutCodeGen() throws Exception {
+
+        final Schema schema = new Schema.Parser().parse(resource("src/main/avro/user.avsc"));
+        final User user1 = new User("User1", 7, "red");
+        final User user2 = new User("User2", 7, null);
+
+        // Write
+        File file = tmpDir.newFile("users2.avro");
+        DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
+        DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<GenericRecord>(datumWriter);
+        dataFileWriter.create(schema, file);
+        dataFileWriter.append(user1);
+        dataFileWriter.append(user2);
+        dataFileWriter.close();
+
+        // Read
+        DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(schema);
+        DataFileReader<GenericRecord> dataFileReader = new DataFileReader<GenericRecord>(file, datumReader);
+
+        final List<GenericRecord> users = new ArrayList<>();
+        while (dataFileReader.hasNext()) {
+            users.add(dataFileReader.next());
+        }
+
+        assertEquals(2, users.size());
+        assertEquals("User1", users.get(0).get("name").toString());
+        assertEquals("User2", users.get(1).get("name").toString());
+
+    }
+
+    private File resource(final String resourcePath) {
+        final String projectRootPath = Class.class.getResource("/").getFile() + "../../";
+        return new File(
+            projectRootPath + resourcePath);
+    }
 }
