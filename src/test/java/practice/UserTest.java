@@ -16,8 +16,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +54,7 @@ public class UserTest {
     }
 
     @Test
-    public void itSerializesToDisk() throws Exception {
+    public void itSerializesWithCodeGen() throws Exception {
 
         final User user1 = new User("User1", 7, "red");
         final User user2 = new User("User2", 7, null);
@@ -64,8 +62,8 @@ public class UserTest {
         final File storageFile = tmpDir.newFile("users.avro");
 
         // Write to disk
-        DatumWriter<User> userDatumWriter = new SpecificDatumWriter<User>(User.class);
-        DataFileWriter<User> dataFileWriter = new DataFileWriter<User>(userDatumWriter);
+        DatumWriter<User> userDatumWriter = new SpecificDatumWriter<>(User.class);
+        DataFileWriter<User> dataFileWriter = new DataFileWriter<>(userDatumWriter);
         dataFileWriter.create(user1.getSchema(), storageFile);
         dataFileWriter.append(user1);
         dataFileWriter.append(user2);
@@ -73,16 +71,12 @@ public class UserTest {
         dataFileWriter.close();
 
         // Read from disk
-        DatumReader<User> userDatumReader = new SpecificDatumReader<User>(User.class);
-        DataFileReader<User> dataFileReader = new DataFileReader<User>(storageFile, userDatumReader);
+        DatumReader<User> userDatumReader = new SpecificDatumReader<>(User.class);
+        DataFileReader<User> dataFileReader = new DataFileReader<>(storageFile, userDatumReader);
 
         final List<User> users = new ArrayList<>();
-        User user = null;
         while (dataFileReader.hasNext()) {
-            // Reuse user object by passing it to next(). This saves us from
-            // allocating and garbage collecting many objects for files with
-            // many items.
-            users.add(dataFileReader.next(user));
+            users.add(dataFileReader.next());
         }
 
         assertEquals("User1", users.get(0).getName().toString());
@@ -101,15 +95,15 @@ public class UserTest {
         // Write
         File file = tmpDir.newFile("users2.avro");
         DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
-        DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<GenericRecord>(datumWriter);
+        DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
         dataFileWriter.create(schema, file);
         dataFileWriter.append(user1);
         dataFileWriter.append(user2);
         dataFileWriter.close();
 
         // Read
-        DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(schema);
-        DataFileReader<GenericRecord> dataFileReader = new DataFileReader<GenericRecord>(file, datumReader);
+        DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(schema);
+        DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader);
 
         final List<GenericRecord> users = new ArrayList<>();
         while (dataFileReader.hasNext()) {
