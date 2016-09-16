@@ -1,3 +1,13 @@
+## Getting started
+
+See [Avro Getting Started](https://avro.apache.org/docs/current/gettingstartedjava.html).
+
+Execute demo using:
+
+```
+mvn test
+```
+
 ## Generate the Java:
 Avro generates Java source files from the Avro schema. The Avro Maven Plugin can be used to achieve this:
 
